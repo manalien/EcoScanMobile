@@ -18,6 +18,11 @@
     "android": {
       "package": "com.yourname.ecoscanmobile",
       "googleServicesFile": "./google-services.json",
+      "config": {
+        "googleMaps": {
+          "apiKey": "AIzaSyBB-g5-6iE5pbmIMR2Sh6_L-EfjShxhc0g"
+        }
+      },
       "adaptiveIcon": {
         "foregroundImage": "./assets/adaptive-icon.png",
         "backgroundColor": "#ffffff"

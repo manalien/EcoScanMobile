@@ -4,14 +4,16 @@ import { TouchableOpacity, Text, StyleSheet } from 'react-native';
 interface Props {
   placeholder?: string;
   onPress?: () => void;
+  style?: object;
 }
 
 export default function SearchBar({
   placeholder = 'Search regions, districts...',
   onPress,
+  style
 }: Props) {
   return (
-    <TouchableOpacity style={styles.container} activeOpacity={0.7} onPress={onPress}>
+    <TouchableOpacity style={[styles.container, style]} activeOpacity={0.7} onPress={onPress}>
       <Text style={styles.text}>{placeholder}</Text>
     </TouchableOpacity>
   );
