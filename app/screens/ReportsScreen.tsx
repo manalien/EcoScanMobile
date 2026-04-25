@@ -80,7 +80,7 @@ export default function ReportsScreen() {
             onPress={() => setActiveFilter(activeFilter === 'period' ? null : 'period')}
           >
             <Text style={styles.filterBtnText}>
-              {selectedPeriod === 'All periods' ? 'Period' : selectedPeriod}
+              {selectedPeriod === 'All periods' ? 'Period ' : selectedPeriod}
             </Text>
             <Text style={styles.filterArrow}>▼</Text>
           </TouchableOpacity>
@@ -90,7 +90,7 @@ export default function ReportsScreen() {
             onPress={() => setActiveFilter(activeFilter === 'region' ? null : 'region')}
           >
             <Text style={styles.filterBtnText}>
-              {selectedRegion === 'All regions' ? 'Region' : selectedRegion}
+              {selectedRegion === 'All regions' ? 'Region ' : selectedRegion}
             </Text>
             <Text style={styles.filterArrow}>▼</Text>
           </TouchableOpacity>
@@ -100,7 +100,7 @@ export default function ReportsScreen() {
             onPress={() => setActiveFilter(activeFilter === 'type' ? null : 'type')}
           >
             <Text style={styles.filterBtnText}>
-              {selectedType === 'All types' ? 'Type' : selectedType.split(' ')[0]}
+              {selectedType === 'All types' ? 'Type ' : selectedType.split(' ')[0]}
             </Text>
             <Text style={styles.filterArrow}>▼</Text>
           </TouchableOpacity>

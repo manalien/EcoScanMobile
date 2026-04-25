@@ -1,15 +1,20 @@
-import React from 'react';
+import React, { useState } from 'react';
 import {
-  View, Text, ScrollView,
-  StyleSheet, StatusBar,
+  View, Text, ScrollView, StyleSheet,
+  StatusBar, Modal, TouchableOpacity,
+  TextInput, FlatList,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { useNavigation } from '@react-navigation/native';
+import { BottomTabNavigationProp } from '@react-navigation/bottom-tabs';
+import { BottomTabParamList } from '../types/navigation';
 
 import SectionHeader from '../components/SectionHeader';
-import SearchBar from '../components/SearchBar';
 import AlertCard from '../components/AlertCard';
 import RegionCard, { RegionItem } from '../components/RegionCard';
 import NDVIChart from '../components/NDVIChart';
+import SearchBar from '../components/SearchBar';
+import RegionDetailSheet from '../components/RegionDetailSheet';
 
 import {
   mockSummary,
@@ -18,9 +23,40 @@ import {
   mockRegions,
 } from '../mock/dashboardData';
 
+type DashboardNavProp = BottomTabNavigationProp<BottomTabParamList, 'Dashboard'>;
+
+// All searchable regions
+const ALL_REGIONS = [
+  { region_id: '1', name: 'Kerala', level: 'State', zone: 'Southern', ndvi_mean: 0.74, ndvi_change: 0.06 },
+  { region_id: '2', name: 'Assam', level: 'State', zone: 'Eastern', ndvi_mean: 0.69, ndvi_change: 0.03 },
+  { region_id: '3', name: 'Rajasthan', level: 'State', zone: 'Western', ndvi_mean: 0.28, ndvi_change: -0.09 },
+  { region_id: '4', name: 'Madhya Pradesh', level: 'State', zone: 'Central', ndvi_mean: 0.42, ndvi_change: -0.14 },
+  { region_id: '5', name: 'Karnataka', level: 'State', zone: 'Southern', ndvi_mean: 0.62, ndvi_change: 0.08 },
+  { region_id: '6', name: 'West Bengal', level: 'State', zone: 'Eastern', ndvi_mean: 0.65, ndvi_change: 0.04 },
+  { region_id: '7', name: 'Maharashtra', level: 'State', zone: 'Western', ndvi_mean: 0.48, ndvi_change: -0.02 },
+  { region_id: '8', name: 'Uttarakhand', level: 'State', zone: 'Northern', ndvi_mean: 0.71, ndvi_change: 0.09 },
+  { region_id: '9', name: 'Jaisalmer', level: 'District', zone: 'Western', ndvi_mean: 0.18, ndvi_change: -0.31 },
+  { region_id: '10', name: 'Shivpuri', level: 'District', zone: 'Central', ndvi_mean: 0.38, ndvi_change: -0.14 },
+];
+
 export default function DashboardScreen() {
+  const navigation = useNavigation<DashboardNavProp>();
+  const [selectedRegion, setSelectedRegion] = useState<RegionItem | null>(null);
+  const [searchVisible, setSearchVisible] = useState(false);
+  const [searchQuery, setSearchQuery] = useState('');
+
+  const searchResults = ALL_REGIONS.filter(r =>
+    r.name.toLowerCase().includes(searchQuery.toLowerCase())
+  );
+
   const handleRegionPress = (region: RegionItem) => {
-    console.log('Pressed:', region.name); // hook up navigation later
+    setSelectedRegion(region);
+  };
+
+  const handleSearchRegionPress = (region: RegionItem) => {
+    setSearchVisible(false);
+    setSearchQuery('');
+    setSelectedRegion(region);
   };
 
   return (
@@ -44,7 +80,7 @@ export default function DashboardScreen() {
         </View>
 
         {/* Search */}
-        <SearchBar />
+        <SearchBar onPress={() => setSearchVisible(true)} />
 
         {/* Summary Metrics */}
         <View style={styles.section}>
@@ -85,16 +121,24 @@ export default function DashboardScreen() {
 
         {/* Alerts */}
         <View style={styles.section}>
-          <SectionHeader title="ACTIVE ALERTS" action="View all" />
-          {mockAlerts.map((alert) => (
+          <SectionHeader
+            title="ACTIVE ALERTS"
+            action="View all"
+            onAction={() => navigation.navigate('Map')}
+          />
+          {mockAlerts.map(alert => (
             <AlertCard key={alert.alert_id} alert={alert} />
           ))}
         </View>
 
         {/* Top Regions */}
         <View style={styles.section}>
-          <SectionHeader title="TOP REGIONS" action="See map" />
-          {mockRegions.map((region) => (
+          <SectionHeader
+            title="TOP REGIONS"
+            action="See map"
+            onAction={() => navigation.navigate('Map')}
+          />
+          {mockRegions.map(region => (
             <RegionCard
               key={region.region_id}
               region={region}
@@ -105,6 +149,65 @@ export default function DashboardScreen() {
 
         <View style={{ height: 20 }} />
       </ScrollView>
+
+      {/* Region detail bottom sheet */}
+      {selectedRegion && (
+        <RegionDetailSheet
+          region={selectedRegion}
+          onClose={() => setSelectedRegion(null)}
+        />
+      )}
+
+      {/* Search modal */}
+      <Modal
+        visible={searchVisible}
+        animationType="slide"
+        transparent
+        onRequestClose={() => { setSearchVisible(false); setSearchQuery(''); }}
+      >
+        <View style={styles.searchOverlay}>
+          <SafeAreaView style={styles.searchContainer} edges={['top']}>
+            <View style={styles.searchHeader}>
+              <TextInput
+                style={styles.searchInput}
+                placeholder="Search regions, districts..."
+                placeholderTextColor="#5a8a52"
+                value={searchQuery}
+                onChangeText={setSearchQuery}
+                autoFocus
+              />
+              <TouchableOpacity
+                onPress={() => { setSearchVisible(false); setSearchQuery(''); }}
+                style={styles.searchCancelBtn}
+              >
+                <Text style={styles.searchCancelText}>Cancel</Text>
+              </TouchableOpacity>
+            </View>
+
+            {searchQuery.length === 0 ? (
+              <View style={styles.searchEmpty}>
+                <Text style={styles.searchEmptyText}>Type to search regions or districts</Text>
+              </View>
+            ) : searchResults.length === 0 ? (
+              <View style={styles.searchEmpty}>
+                <Text style={styles.searchEmptyText}>No results for "{searchQuery}"</Text>
+              </View>
+            ) : (
+              <FlatList
+                data={searchResults}
+                keyExtractor={item => item.region_id}
+                contentContainerStyle={{ paddingHorizontal: 20, paddingTop: 8 }}
+                renderItem={({ item }) => (
+                  <RegionCard
+                    region={item}
+                    onPress={handleSearchRegionPress}
+                  />
+                )}
+              />
+            )}
+          </SafeAreaView>
+        </View>
+      </Modal>
     </SafeAreaView>
   );
 }
@@ -137,4 +240,41 @@ const styles = StyleSheet.create({
   metricLabel: { fontSize: 10, color: '#5a8a52', letterSpacing: 0.5, marginBottom: 4 },
   metricValue: { fontSize: 20, fontWeight: '500', color: '#d4f0c8' },
   metricChange: { fontSize: 10, color: '#4a9e3a', marginTop: 2 },
+
+  // Search modal
+  searchOverlay: {
+    flex: 1,
+    backgroundColor: '#0f1a0f',
+  },
+  searchContainer: {
+    flex: 1,
+  },
+  searchHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: 20,
+    paddingVertical: 12,
+    gap: 10,
+    borderBottomWidth: 0.5,
+    borderBottomColor: '#1e3a1e',
+  },
+  searchInput: {
+    flex: 1,
+    backgroundColor: '#1a2e1a',
+    borderRadius: 10,
+    paddingHorizontal: 14,
+    paddingVertical: 10,
+    fontSize: 14,
+    color: '#d4f0c8',
+    borderWidth: 0.5,
+    borderColor: '#2d4a2d',
+  },
+  searchCancelBtn: { paddingVertical: 8 },
+  searchCancelText: { fontSize: 13, color: '#7aad6a' },
+  searchEmpty: {
+    flex: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  searchEmptyText: { fontSize: 13, color: '#5a8a52' },
 });

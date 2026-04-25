@@ -138,6 +138,7 @@ const styles = StyleSheet.create({
     marginLeft: 8,
   },
   generatingText: {
+    width: '120%',
     fontSize: 10,
     color: '#5a5a5a',
   },

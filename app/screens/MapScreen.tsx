@@ -24,7 +24,6 @@ const INDIA_REGION = {
 
 const COMPOSITE_OPTIONS = ['Monthly', 'Weekly', 'Yearly'];
 
-// convert mockMapAlerts to AlertItem shape
 const alertItems: AlertItem[] = mockMapAlerts.map(a => ({
   alert_id: a.id,
   region: `${a.state}`,
@@ -36,6 +35,17 @@ const alertItems: AlertItem[] = mockMapAlerts.map(a => ({
   area_affected: Math.abs(Math.round(a.ndvi_change * 80)),
   created_at: '2h ago',
 }));
+
+const getLegendLabel = (key: string) => {
+  switch (key) {
+    case 'severe_decrease': return 'Severe −';
+    case 'moderate_decrease': return 'Moderate −';
+    case 'no_change': return 'No change';
+    case 'moderate_increase': return 'Moderate +';
+    case 'severe_increase': return 'Severe +';
+    default: return key;
+  }
+};
 
 export default function MapScreen() {
   const mapRef = useRef<MapView>(null);
@@ -64,25 +74,27 @@ export default function MapScreen() {
     <SafeAreaView style={styles.safeArea} edges={['top']}>
       <StatusBar backgroundColor="#0f1a0f" barStyle="light-content" />
 
-      {/* Header */}
-      <View style={styles.header}>
+      {/* Header title */}
+      <View style={styles.headerTop}>
         <SectionHeader title="NDVI MAP" />
-        <View style={styles.compositeRow}>
-          {COMPOSITE_OPTIONS.map(opt => (
-            <TouchableOpacity
-              key={opt}
-              style={[styles.compositeBtn, activeComposite === opt && styles.compositeBtnActive]}
-              onPress={() => setActiveComposite(opt)}
-            >
-              <Text style={[styles.compositeBtnText, activeComposite === opt && styles.compositeBtnTextActive]}>
-                {opt}
-              </Text>
-            </TouchableOpacity>
-          ))}
-        </View>
       </View>
 
-      <SearchBar 
+      {/* Composite buttons */}
+      <View style={styles.compositeRow}>
+        {COMPOSITE_OPTIONS.map(opt => (
+          <TouchableOpacity
+            key={opt}
+            style={[styles.compositeBtn, activeComposite === opt && styles.compositeBtnActive]}
+            onPress={() => setActiveComposite(opt)}
+          >
+            <Text style={[styles.compositeBtnText, activeComposite === opt && styles.compositeBtnTextActive]}>
+              {opt}
+            </Text>
+          </TouchableOpacity>
+        ))}
+      </View>
+
+      <SearchBar
         placeholder="Search state or district..."
         style={{ marginHorizontal: 20 }}
       />
@@ -94,7 +106,7 @@ export default function MapScreen() {
           style={styles.map}
           provider={PROVIDER_GOOGLE}
           initialRegion={INDIA_REGION}
-          // customMapStyle={darkMapStyle}
+          customMapStyle={darkMapStyle}
         >
           {mockRegionPolygons.map(region => (
             <Polygon
@@ -171,9 +183,7 @@ export default function MapScreen() {
             {Object.entries(NDVI_COLORS).map(([key, color]) => (
               <View key={key} style={styles.legendItem}>
                 <View style={[styles.legendDot, { backgroundColor: color }]} />
-                <Text style={styles.legendLabel}>
-                  {key.replace('_', ' ').replace('decrease', '−').replace('increase', '+').replace('no change', '~')}
-                </Text>
+                <Text style={styles.legendLabel}>{getLegendLabel(key)}</Text>
               </View>
             ))}
           </View>
@@ -197,7 +207,6 @@ export default function MapScreen() {
   );
 }
 
-// Dark map style for Google Maps
 const darkMapStyle = [
   { elementType: 'geometry', stylers: [{ color: '#0d1a0d' }] },
   { elementType: 'labels.text.fill', stylers: [{ color: '#5a8a52' }] },
@@ -216,24 +225,39 @@ const darkMapStyle = [
 const styles = StyleSheet.create({
   safeArea: { flex: 1, backgroundColor: '#0f1a0f' },
 
-  header: {
+  headerTop: {
     paddingHorizontal: 20,
     paddingTop: 16,
     paddingBottom: 4,
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
   },
-  compositeRow: { flexDirection: 'row', gap: 4 },
+  compositeRow: {
+    flexDirection: 'row',
+    paddingHorizontal: 20,
+    gap: 10,
+    marginBottom: 10,
+    alignItems: 'center',   // ← don't stretch buttons to row height
+  },
   compositeBtn: {
-    paddingHorizontal: 10,
-    paddingVertical: 4,
-    borderRadius: 6,
+    flex: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: 10,    // ← increased to give descenders room on Android
+    borderRadius: 8,
+    backgroundColor: '#1a2e1a',
+    borderWidth: 0.5,
+    borderColor: '#2d4a2d',
   },
   compositeBtnActive: {
     backgroundColor: '#2d4a2d',
+    borderColor: '#3a6a3a',
   },
-  compositeBtnText: { fontSize: 11, color: '#5a8a52' },
+  compositeBtnText: {
+    fontSize: 12,
+    color: '#5a8a52',
+    textAlign: 'center', 
+    textAlignVertical: 'center',
+    width: '100%'
+  },
   compositeBtnTextActive: { color: '#7aad6a' },
 
   mapContainer: {
@@ -299,7 +323,7 @@ const styles = StyleSheet.create({
     height: 10,
     borderRadius: 2,
   },
-  legendLabel: { fontSize: 9, color: '#5a8a52', textTransform: 'capitalize' },
+  legendLabel: { fontSize: 9, color: '#5a8a52' },
 
   alertsScroll: { flex: 1 },
   alertsContent: { paddingHorizontal: 20, paddingTop: 12 },

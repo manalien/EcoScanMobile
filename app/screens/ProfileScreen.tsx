@@ -136,8 +136,8 @@ export default function ProfileScreen() {
               <View style={styles.rowLeft}>
                 <View style={[styles.severityDot, { backgroundColor: item.dot }]} />
                 <View>
-                  <Text style={styles.rowLabel}>{item.label}</Text>
-                  <Text style={styles.rowSub}>{item.channels}</Text>
+                  <Text style={styles.rowLabel}>{item.label + ' '}</Text>
+                  <Text style={styles.rowSub}>{item.channels + ' '}</Text>
                 </View>
               </View>
               <Switch
@@ -175,7 +175,7 @@ export default function ProfileScreen() {
           >
             <Text style={styles.rowLabel}>Default composite</Text>
             <View style={styles.rowRight}>
-              <Text style={styles.rowValue}>{appSettings.defaultComposite}</Text>
+              <Text style={styles.rowValue}>{appSettings.defaultComposite + ' '}</Text>
               <Text style={styles.rowChevron}>
                 {showCompositeOptions ? '▲' : '›'}
               </Text>
@@ -215,16 +215,16 @@ export default function ProfileScreen() {
         <Text style={styles.sectionTitle}>ABOUT</Text>
         <View style={styles.card}>
           <View style={[styles.row, styles.rowBorder]}>
-            <Text style={styles.rowLabel}>Version</Text>
-            <Text style={styles.rowValue}>1.0.0</Text>
+            <Text style={styles.rowLabel}>Version </Text> 
+            <Text style={styles.rowValue}>1.0.0 </Text> 
           </View>
           <View style={[styles.row, styles.rowBorder]}>
-            <Text style={styles.rowLabel}>Data source</Text>
-            <Text style={styles.rowValue}>Sentinel-2 · GEE</Text>
+            <Text style={styles.rowLabel}>Data source </Text> 
+            <Text style={styles.rowValue}>Sentinel-2 · GEE   </Text> 
           </View>
           <View style={styles.row}>
-            <Text style={styles.rowLabel}>Institution</Text>
-            <Text style={styles.rowValue}>NIT Delhi</Text>
+            <Text style={styles.rowLabel}>Institution </Text> 
+            <Text style={styles.rowValue}>NIT Delhi </Text> 
           </View>
         </View>
 
@@ -297,6 +297,7 @@ const styles = StyleSheet.create({
     marginBottom: 6,
   },
   roleBadge: {
+    width: '47%',
     backgroundColor: '#0d3a1a',
     borderWidth: 0.5,
     borderColor: '#2d6a2d',
