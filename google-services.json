@@ -12,7 +12,28 @@
           "package_name": "com.yourname.ecoscanmobile"
         }
       },
-      "oauth_client": [],
+      "oauth_client": [
+        {
+          "client_id": "445824023413-dq5b5osbmlrlvurb254cvu2dg1nntduj.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.yourname.ecoscanmobile",
+            "certificate_hash": "5e8f16062ea3cd2c4a0d547876baa6f38cabf625"
+          }
+        },
+        {
+          "client_id": "445824023413-q7lmfsqmk6r3e36oh99djq73l1tqva4i.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.yourname.ecoscanmobile",
+            "certificate_hash": "d2e370f988170360f92ff51b7aa62418584c72d9"
+          }
+        },
+        {
+          "client_id": "445824023413-e0qes8nf1lagcu3uiq227d9gsai93uf8.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
       "api_key": [
         {
           "current_key": "AIzaSyDStkQTGF9J204rreE-ZwKLQQZI72Nnhk4"
@@ -20,7 +41,12 @@
       ],
       "services": {
         "appinvite_service": {
-          "other_platform_oauth_client": []
+          "other_platform_oauth_client": [
+            {
+              "client_id": "445824023413-e0qes8nf1lagcu3uiq227d9gsai93uf8.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
         }
       }
     }

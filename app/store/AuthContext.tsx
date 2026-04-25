@@ -3,14 +3,14 @@ import auth, { FirebaseAuthTypes } from '@react-native-firebase/auth';
 import { GoogleSignin } from '@react-native-google-signin/google-signin';
 
 GoogleSignin.configure({
-  webClientId: '445824023413-e0qes8nf1lagcu3uiq227d9gsai93uf8.apps.googleusercontent.com', // from Firebase console → Project settings → Web API key
+  webClientId: '445824023413-e0qes8nf1lagcu3uiq227d9gsai93uf8.apps.googleusercontent.com',
 });
 
 interface AuthContextType {
   isLoggedIn: boolean;
   user: FirebaseAuthTypes.User | null;
   loading: boolean;
-  loginWithGoogle: () => Promise<void>;
+  login: () => Promise<void>;
   logout: () => Promise<void>;
   error: string | null;
 }
@@ -23,7 +23,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    // Listen for auth state changes
     const unsubscribe = auth().onAuthStateChanged((firebaseUser) => {
       setUser(firebaseUser);
       setLoading(false);
@@ -31,18 +30,27 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     return unsubscribe;
   }, []);
 
-  const loginWithGoogle = async () => {
-    try {
-      setError(null);
-      await GoogleSignin.hasPlayServices();
-      const { idToken } = await GoogleSignin.signIn();
-      const credential = auth.GoogleAuthProvider.credential(idToken);
-      await auth().signInWithCredential(credential);
-    } catch (e: any) {
-      setError('Sign-in failed. Please try again.');
-      console.error(e);
+  const login = async () => {
+  try {
+    setError(null);
+    await GoogleSignin.hasPlayServices();
+    const response = await GoogleSignin.signIn();
+    
+    // newer versions nest it under response.data
+    const idToken = response.data?.idToken ?? (response as any).idToken;
+    
+    if (!idToken) {
+      setError('Sign-in failed: no token received.');
+      return;
     }
-  };
+
+    const credential = auth.GoogleAuthProvider.credential(idToken);
+    await auth().signInWithCredential(credential);
+  } catch (e: any) {
+    console.error('Google Sign-In error:', e);
+    setError('Sign-in failed. Please try again.');
+  }
+};
 
   const logout = async () => {
     try {
@@ -59,7 +67,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         isLoggedIn: !!user,
         user,
         loading,
-        loginWithGoogle,
+        login,
         logout,
         error,
       }}
