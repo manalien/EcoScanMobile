@@ -5,6 +5,7 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useAuth } from '../store/AuthContext';
+import { Platform } from 'react-native';
 
 interface NotificationPrefs {
   critical: boolean;
@@ -98,7 +99,7 @@ export default function ProfileScreen() {
 
   return (
     <SafeAreaView style={styles.safeArea} edges={['top']}>
-      <StatusBar backgroundColor="#0f1a0f" barStyle="light-content" />
+      <StatusBar barStyle="light-content" />
       <ScrollView
         style={styles.scroll}
         contentContainerStyle={styles.scrollContent}

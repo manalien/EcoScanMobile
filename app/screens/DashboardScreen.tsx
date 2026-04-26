@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { Platform } from 'react-native';
 import {
   View, Text, ScrollView, StyleSheet,
   StatusBar, Modal, TouchableOpacity,
@@ -61,12 +62,12 @@ export default function DashboardScreen() {
 
   return (
     <SafeAreaView style={styles.safeArea} edges={['top']}>
-      <StatusBar backgroundColor="#0f1a0f" barStyle="light-content" />
+      <StatusBar barStyle="light-content" />
       <ScrollView
         style={styles.scroll}
         contentContainerStyle={styles.scrollContent}
         showsVerticalScrollIndicator={false}
-        overScrollMode="never"
+        overScrollMode={Platform.OS === 'android' ? 'never' : 'auto'}
       >
         {/* Header */}
         <View style={styles.header}>

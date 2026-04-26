@@ -14,6 +14,7 @@ import {
   NDVI_COLORS,
   RegionPolygon,
 } from '../mock/mapData';
+import { Platform } from 'react-native';
 
 const INDIA_REGION = {
   latitude: 22.5,
@@ -72,7 +73,7 @@ export default function MapScreen() {
 
   return (
     <SafeAreaView style={styles.safeArea} edges={['top']}>
-      <StatusBar backgroundColor="#0f1a0f" barStyle="light-content" />
+      <StatusBar barStyle="light-content" />
 
       {/* Header title */}
       <View style={styles.headerTop}>
@@ -195,7 +196,7 @@ export default function MapScreen() {
         style={styles.alertsScroll}
         contentContainerStyle={styles.alertsContent}
         showsVerticalScrollIndicator={false}
-        overScrollMode="never"
+        overScrollMode={Platform.OS === 'android' ? 'never' : 'auto'}
       >
         <SectionHeader title="ACTIVE ALERTS" />
         {alertItems.map(alert => (

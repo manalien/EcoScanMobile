@@ -5,6 +5,7 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useAuth } from '../store/AuthContext';
+import { Platform } from 'react-native';
 
 export default function LoginScreen() {
   const { login, loading, error } = useAuth();
@@ -19,7 +20,7 @@ export default function LoginScreen() {
 
   return (
     <SafeAreaView style={styles.container} edges={['top', 'bottom']}>
-      <StatusBar backgroundColor="#0f1a0f" barStyle="light-content" />
+      <StatusBar barStyle="light-content" />
       <View style={styles.topDecoration}>
         <View style={styles.decorCircleLarge} />
         <View style={styles.decorCircleSmall} />

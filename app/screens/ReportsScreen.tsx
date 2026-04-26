@@ -10,6 +10,7 @@ import {
   mockReports, ReportItem,
   REGIONS, REPORT_TYPES, PERIODS,
 } from '../mock/reportsData';
+import { Platform } from 'react-native';
 
 type FilterType = 'period' | 'region' | 'type' | null;
 
@@ -57,7 +58,7 @@ export default function ReportsScreen() {
 
   return (
     <SafeAreaView style={styles.safeArea} edges={['top']}>
-      <StatusBar backgroundColor="#0f1a0f" barStyle="light-content" />
+      <StatusBar barStyle="light-content" />
 
       <ScrollView
         style={styles.scroll}
