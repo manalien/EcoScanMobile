@@ -1,5 +1,5 @@
-import React, { useState } from 'react';
-import { Platform } from 'react-native';
+import React, { useState, useEffect } from 'react';
+import { Platform, ActivityIndicator } from 'react-native';
 import {
   View, Text, ScrollView, StyleSheet,
   StatusBar, Modal, TouchableOpacity,
@@ -17,28 +17,18 @@ import NDVIChart from '../components/NDVIChart';
 import SearchBar from '../components/SearchBar';
 import RegionDetailSheet from '../components/RegionDetailSheet';
 
+import { fetchAlerts, fetchRegions } from '../services/api';
+import { USE_MOCK_DATA, mockSummary, mockNDVITrend, mockAlerts, mockRegions } from '../constants/config';
+
+// Fallback if USE_MOCK_DATA is true
 import {
-  mockSummary,
-  mockNDVITrend,
-  mockAlerts,
-  mockRegions,
+  mockSummary as _mockSummary,
+  mockNDVITrend as _mockNDVITrend,
+  mockAlerts as _mockAlerts,
+  mockRegions as _mockRegions,
 } from '../mock/dashboardData';
 
 type DashboardNavProp = BottomTabNavigationProp<BottomTabParamList, 'Dashboard'>;
-
-// All searchable regions
-const ALL_REGIONS = [
-  { region_id: '1', name: 'Kerala', level: 'State', zone: 'Southern', ndvi_mean: 0.74, ndvi_change: 0.06 },
-  { region_id: '2', name: 'Assam', level: 'State', zone: 'Eastern', ndvi_mean: 0.69, ndvi_change: 0.03 },
-  { region_id: '3', name: 'Rajasthan', level: 'State', zone: 'Western', ndvi_mean: 0.28, ndvi_change: -0.09 },
-  { region_id: '4', name: 'Madhya Pradesh', level: 'State', zone: 'Central', ndvi_mean: 0.42, ndvi_change: -0.14 },
-  { region_id: '5', name: 'Karnataka', level: 'State', zone: 'Southern', ndvi_mean: 0.62, ndvi_change: 0.08 },
-  { region_id: '6', name: 'West Bengal', level: 'State', zone: 'Eastern', ndvi_mean: 0.65, ndvi_change: 0.04 },
-  { region_id: '7', name: 'Maharashtra', level: 'State', zone: 'Western', ndvi_mean: 0.48, ndvi_change: -0.02 },
-  { region_id: '8', name: 'Uttarakhand', level: 'State', zone: 'Northern', ndvi_mean: 0.71, ndvi_change: 0.09 },
-  { region_id: '9', name: 'Jaisalmer', level: 'District', zone: 'Western', ndvi_mean: 0.18, ndvi_change: -0.31 },
-  { region_id: '10', name: 'Shivpuri', level: 'District', zone: 'Central', ndvi_mean: 0.38, ndvi_change: -0.14 },
-];
 
 export default function DashboardScreen() {
   const navigation = useNavigation<DashboardNavProp>();
@@ -46,19 +36,76 @@ export default function DashboardScreen() {
   const [searchVisible, setSearchVisible] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
 
-  const searchResults = ALL_REGIONS.filter(r =>
+  const [alerts, setAlerts] = useState<any[]>([]);
+  const [regions, setRegions] = useState<RegionItem[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    if (USE_MOCK_DATA) {
+      setAlerts(_mockAlerts);
+      setRegions(_mockRegions);
+      setLoading(false);
+      return;
+    }
+
+    const load = async () => {
+      try {
+        const [alertsData, regionsData] = await Promise.all([
+          fetchAlerts(),
+          fetchRegions(),
+        ]);
+
+        // Map API alert shape → AlertCard shape
+        const mappedAlerts = alertsData.map((a: any) => ({
+          alert_id: a.alert_id,
+          region: a.region_name,
+          severity: a.severity,
+          description: a.message,
+          ndvi_change: a.ndvi_change,
+          area_affected: Math.abs(Math.round(a.percent_change)),
+          created_at: new Date(a.created_at).toLocaleString(),
+        }));
+
+        // Map API region shape → RegionCard shape
+        const mappedRegions = regionsData.map((r: any) => ({
+          region_id: r.region_id,
+          name: r.name,
+          level: r.level,
+          zone: r.zone ?? '—',
+          ndvi_mean: r.ndvi_mean ?? 0,
+          ndvi_change: r.ndvi_change ?? 0,
+        }));
+
+        setAlerts(mappedAlerts);
+        setRegions(mappedRegions);
+      } catch (e) {
+        console.error('Dashboard fetch error:', e);
+        // Fall back to mock on error
+        setAlerts(_mockAlerts);
+        setRegions(_mockRegions);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    load();
+  }, []);
+
+  const summary = USE_MOCK_DATA ? _mockSummary : {
+    avg_ndvi: regions.length
+      ? regions.reduce((s, r) => s + (r.ndvi_mean ?? 0), 0) / regions.length
+      : 0,
+    ndvi_change: 0,
+    area_km2: 3287263,
+    active_alerts: alerts.length,
+    critical_alerts: alerts.filter((a: any) => a.severity === 'Critical').length,
+  };
+
+  const ndviTrend = _mockNDVITrend; // NDVI trend endpoint not yet available
+
+  const searchResults = regions.filter(r =>
     r.name.toLowerCase().includes(searchQuery.toLowerCase())
   );
-
-  const handleRegionPress = (region: RegionItem) => {
-    setSelectedRegion(region);
-  };
-
-  const handleSearchRegionPress = (region: RegionItem) => {
-    setSearchVisible(false);
-    setSearchQuery('');
-    setSelectedRegion(region);
-  };
 
   return (
     <SafeAreaView style={styles.safeArea} edges={['top']}>
@@ -73,93 +120,92 @@ export default function DashboardScreen() {
         <View style={styles.header}>
           <View>
             <Text style={styles.greeting}>GOOD MORNING</Text>
-            <Text style={styles.name}>Joyce</Text>
+            <Text style={styles.name}>EcoScan</Text>
           </View>
           <View style={styles.avatar}>
-            <Text style={styles.avatarText}>JM</Text>
+            <Text style={styles.avatarText}>EC</Text>
           </View>
         </View>
 
-        {/* Search */}
         <SearchBar onPress={() => setSearchVisible(true)} />
 
-        {/* Summary Metrics */}
-        <View style={styles.section}>
-          <SectionHeader title="OVERVIEW — APRIL 2025" />
-          <View style={styles.metricsRow}>
-            <View style={styles.metricCard}>
-              <Text style={styles.metricLabel}>AVG NDVI</Text>
-              <Text style={styles.metricValue}>{mockSummary.avg_ndvi.toFixed(2)}</Text>
-              <Text style={styles.metricChange}>+{mockSummary.ndvi_change.toFixed(2)} ↑</Text>
+        {loading ? (
+          <ActivityIndicator color="#7aad6a" style={{ marginTop: 40 }} />
+        ) : (
+          <>
+            {/* Summary Metrics */}
+            <View style={styles.section}>
+              <SectionHeader title="OVERVIEW" />
+              <View style={styles.metricsRow}>
+                <View style={styles.metricCard}>
+                  <Text style={styles.metricLabel}>AVG NDVI</Text>
+                  <Text style={styles.metricValue}>{summary.avg_ndvi.toFixed(2)}</Text>
+                  <Text style={styles.metricChange}>
+                    {summary.ndvi_change >= 0 ? '+' : ''}{summary.ndvi_change.toFixed(2)} ↑
+                  </Text>
+                </View>
+                <View style={styles.metricCard}>
+                  <Text style={styles.metricLabel}>AREA (KM²)</Text>
+                  <Text style={styles.metricValue}>
+                    {(summary.area_km2 / 1_000_000).toFixed(2)}M
+                  </Text>
+                  <Text style={[styles.metricChange, { color: '#5a8a52' }]}>monitored</Text>
+                </View>
+                <View style={[styles.metricCard, { borderColor: '#3a1a1a' }]}>
+                  <Text style={styles.metricLabel}>ALERTS</Text>
+                  <Text style={[styles.metricValue, { color: '#f46d43' }]}>
+                    {summary.active_alerts}
+                  </Text>
+                  <Text style={[styles.metricChange, { color: '#c0503a' }]}>
+                    {summary.critical_alerts} critical
+                  </Text>
+                </View>
+              </View>
             </View>
-            <View style={styles.metricCard}>
-              <Text style={styles.metricLabel}>AREA (KM²)</Text>
-              <Text style={styles.metricValue}>
-                {(mockSummary.area_km2 / 1_000_000).toFixed(2)}M
-              </Text>
-              <Text style={[styles.metricChange, { color: '#5a8a52' }]}>monitored</Text>
+
+            {/* NDVI Chart */}
+            <View style={styles.section}>
+              <SectionHeader title="NDVI TREND — INDIA" />
+              <NDVIChart labels={ndviTrend.labels} values={ndviTrend.values} />
             </View>
-            <View style={[styles.metricCard, { borderColor: '#3a1a1a' }]}>
-              <Text style={styles.metricLabel}>ALERTS</Text>
-              <Text style={[styles.metricValue, { color: '#f46d43' }]}>
-                {mockSummary.active_alerts}
-              </Text>
-              <Text style={[styles.metricChange, { color: '#c0503a' }]}>
-                {mockSummary.critical_alerts} critical
-              </Text>
+
+            {/* Alerts */}
+            <View style={styles.section}>
+              <SectionHeader
+                title="ACTIVE ALERTS"
+                action="View all"
+                onAction={() => navigation.navigate('Map')}
+              />
+              {alerts.map((alert: any) => (
+                <AlertCard key={alert.alert_id} alert={alert} />
+              ))}
             </View>
-          </View>
-        </View>
 
-        {/* NDVI Chart */}
-        <View style={styles.section}>
-          <SectionHeader title="NDVI TREND — INDIA" />
-          <NDVIChart
-            labels={mockNDVITrend.labels}
-            values={mockNDVITrend.values}
-          />
-        </View>
-
-        {/* Alerts */}
-        <View style={styles.section}>
-          <SectionHeader
-            title="ACTIVE ALERTS"
-            action="View all"
-            onAction={() => navigation.navigate('Map')}
-          />
-          {mockAlerts.map(alert => (
-            <AlertCard key={alert.alert_id} alert={alert} />
-          ))}
-        </View>
-
-        {/* Top Regions */}
-        <View style={styles.section}>
-          <SectionHeader
-            title="TOP REGIONS"
-            action="See map"
-            onAction={() => navigation.navigate('Map')}
-          />
-          {mockRegions.map(region => (
-            <RegionCard
-              key={region.region_id}
-              region={region}
-              onPress={handleRegionPress}
-            />
-          ))}
-        </View>
+            {/* Top Regions */}
+            <View style={styles.section}>
+              <SectionHeader
+                title="TOP REGIONS"
+                action="See map"
+                onAction={() => navigation.navigate('Map')}
+              />
+              {regions.map(region => (
+                <RegionCard
+                  key={region.region_id}
+                  region={region}
+                  onPress={setSelectedRegion}
+                />
+              ))}
+            </View>
+          </>
+        )}
 
         <View style={{ height: 20 }} />
       </ScrollView>
 
-      {/* Region detail bottom sheet */}
       {selectedRegion && (
-        <RegionDetailSheet
-          region={selectedRegion}
-          onClose={() => setSelectedRegion(null)}
-        />
+        <RegionDetailSheet region={selectedRegion} onClose={() => setSelectedRegion(null)} />
       )}
 
-      {/* Search modal */}
       <Modal
         visible={searchVisible}
         animationType="slide"
@@ -181,13 +227,13 @@ export default function DashboardScreen() {
                 onPress={() => { setSearchVisible(false); setSearchQuery(''); }}
                 style={styles.searchCancelBtn}
               >
-                <Text style={styles.searchCancelText}>Cancel</Text>
+                <Text style={styles.searchCancelText}>Cancel </Text>
               </TouchableOpacity>
             </View>
 
             {searchQuery.length === 0 ? (
               <View style={styles.searchEmpty}>
-                <Text style={styles.searchEmptyText}>Type to search regions or districts</Text>
+                
               </View>
             ) : searchResults.length === 0 ? (
               <View style={styles.searchEmpty}>
@@ -201,7 +247,7 @@ export default function DashboardScreen() {
                 renderItem={({ item }) => (
                   <RegionCard
                     region={item}
-                    onPress={handleSearchRegionPress}
+                    onPress={r => { setSearchVisible(false); setSearchQuery(''); setSelectedRegion(r); }}
                   />
                 )}
               />
@@ -218,10 +264,8 @@ const styles = StyleSheet.create({
   scroll: { flex: 1, backgroundColor: '#0f1a0f' },
   scrollContent: { paddingHorizontal: 20, paddingTop: 16 },
   header: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'flex-start',
-    marginBottom: 12,
+    flexDirection: 'row', justifyContent: 'space-between',
+    alignItems: 'flex-start', marginBottom: 12,
   },
   greeting: { fontSize: 12, color: '#5a8a52', letterSpacing: 0.8, marginBottom: 2 },
   name: { fontSize: 24, fontWeight: '500', color: '#d4f0c8' },
@@ -234,48 +278,27 @@ const styles = StyleSheet.create({
   section: { marginBottom: 20 },
   metricsRow: { flexDirection: 'row', gap: 8 },
   metricCard: {
-    flex: 1, backgroundColor: '#1a2e1a',
-    borderRadius: 10, padding: 12,
-    borderWidth: 0.5, borderColor: '#2d4a2d',
+    flex: 1, backgroundColor: '#1a2e1a', borderRadius: 10,
+    padding: 12, borderWidth: 0.5, borderColor: '#2d4a2d',
   },
   metricLabel: { fontSize: 10, color: '#5a8a52', letterSpacing: 0.5, marginBottom: 4 },
   metricValue: { fontSize: 20, fontWeight: '500', color: '#d4f0c8' },
   metricChange: { fontSize: 10, color: '#4a9e3a', marginTop: 2 },
-
-  // Search modal
-  searchOverlay: {
-    flex: 1,
-    backgroundColor: '#0f1a0f',
-  },
-  searchContainer: {
-    flex: 1,
-  },
+  searchOverlay: { flex: 1, backgroundColor: '#0f1a0f' },
+  searchContainer: { flex: 1 },
   searchHeader: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingHorizontal: 20,
-    paddingVertical: 12,
-    gap: 10,
-    borderBottomWidth: 0.5,
-    borderBottomColor: '#1e3a1e',
+    flexDirection: 'row', alignItems: 'center',
+    paddingHorizontal: 20, paddingVertical: 12, gap: 10,
+    borderBottomWidth: 0.5, borderBottomColor: '#1e3a1e',
   },
   searchInput: {
-    flex: 1,
-    backgroundColor: '#1a2e1a',
-    borderRadius: 10,
-    paddingHorizontal: 14,
-    paddingVertical: 10,
-    fontSize: 14,
-    color: '#d4f0c8',
-    borderWidth: 0.5,
-    borderColor: '#2d4a2d',
+    flex: 1, backgroundColor: '#1a2e1a', borderRadius: 10,
+    paddingHorizontal: 14, paddingVertical: 10,
+    fontSize: 14, color: '#d4f0c8',
+    borderWidth: 0.5, borderColor: '#2d4a2d',
   },
   searchCancelBtn: { paddingVertical: 8 },
   searchCancelText: { fontSize: 13, color: '#7aad6a' },
-  searchEmpty: {
-    flex: 1,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
+  searchEmpty: { flex: 1, alignItems: 'center', justifyContent: 'center' },
   searchEmptyText: { fontSize: 13, color: '#5a8a52' },
 });
