@@ -18,9 +18,9 @@ import SearchBar from '../components/SearchBar';
 import RegionDetailSheet from '../components/RegionDetailSheet';
 
 import { fetchAlerts, fetchRegions } from '../services/api';
-import { USE_MOCK_DATA, mockSummary, mockNDVITrend, mockAlerts, mockRegions } from '../constants/config';
+import { USE_MOCK_DATA } from '../constants/config';
+import { useAuth } from '../store/AuthContext';
 
-// Fallback if USE_MOCK_DATA is true
 import {
   mockSummary as _mockSummary,
   mockNDVITrend as _mockNDVITrend,
@@ -32,13 +32,34 @@ type DashboardNavProp = BottomTabNavigationProp<BottomTabParamList, 'Dashboard'>
 
 export default function DashboardScreen() {
   const navigation = useNavigation<DashboardNavProp>();
+  const { user } = useAuth();
+
   const [selectedRegion, setSelectedRegion] = useState<RegionItem | null>(null);
   const [searchVisible, setSearchVisible] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
-
   const [alerts, setAlerts] = useState<any[]>([]);
   const [regions, setRegions] = useState<RegionItem[]>([]);
   const [loading, setLoading] = useState(true);
+
+  // ── Derive name + initials from Firebase user ──────────────────
+  const getInitials = () => {
+    if (user?.displayName) {
+      return user.displayName
+        .split(' ')
+        .map((n: string) => n[0])
+        .join('')
+        .toUpperCase()
+        .slice(0, 2);
+    }
+    if (user?.email) return user.email[0].toUpperCase();
+    return 'U';
+  };
+
+  const getFirstName = () => {
+    if (user?.displayName) return user.displayName.split(' ')[0];
+    if (user?.email) return user.email.split('@')[0];
+    return 'there';
+  };
 
   useEffect(() => {
     if (USE_MOCK_DATA) {
@@ -55,7 +76,6 @@ export default function DashboardScreen() {
           fetchRegions(),
         ]);
 
-        // Map API alert shape → AlertCard shape
         const mappedAlerts = alertsData.map((a: any) => ({
           alert_id: a.alert_id,
           region: a.region_name,
@@ -66,7 +86,6 @@ export default function DashboardScreen() {
           created_at: new Date(a.created_at).toLocaleString(),
         }));
 
-        // Map API region shape → RegionCard shape
         const mappedRegions = regionsData.map((r: any) => ({
           region_id: r.region_id,
           name: r.name,
@@ -80,7 +99,6 @@ export default function DashboardScreen() {
         setRegions(mappedRegions);
       } catch (e) {
         console.error('Dashboard fetch error:', e);
-        // Fall back to mock on error
         setAlerts(_mockAlerts);
         setRegions(_mockRegions);
       } finally {
@@ -101,7 +119,7 @@ export default function DashboardScreen() {
     critical_alerts: alerts.filter((a: any) => a.severity === 'Critical').length,
   };
 
-  const ndviTrend = _mockNDVITrend; // NDVI trend endpoint not yet available
+  const ndviTrend = _mockNDVITrend;
 
   const searchResults = regions.filter(r =>
     r.name.toLowerCase().includes(searchQuery.toLowerCase())
@@ -120,10 +138,10 @@ export default function DashboardScreen() {
         <View style={styles.header}>
           <View>
             <Text style={styles.greeting}>GOOD MORNING</Text>
-            <Text style={styles.name}>EcoScan</Text>
+            <Text style={styles.name}>{getFirstName()}</Text>
           </View>
           <View style={styles.avatar}>
-            <Text style={styles.avatarText}>EC</Text>
+            <Text style={styles.avatarText}>{getInitials()}</Text>
           </View>
         </View>
 
@@ -203,7 +221,10 @@ export default function DashboardScreen() {
       </ScrollView>
 
       {selectedRegion && (
-        <RegionDetailSheet region={selectedRegion} onClose={() => setSelectedRegion(null)} />
+        <RegionDetailSheet
+          region={selectedRegion}
+          onClose={() => setSelectedRegion(null)}
+        />
       )}
 
       <Modal
@@ -227,13 +248,13 @@ export default function DashboardScreen() {
                 onPress={() => { setSearchVisible(false); setSearchQuery(''); }}
                 style={styles.searchCancelBtn}
               >
-                <Text style={styles.searchCancelText}>Cancel </Text>
+                <Text style={styles.searchCancelText}>Cancel</Text>
               </TouchableOpacity>
             </View>
 
             {searchQuery.length === 0 ? (
               <View style={styles.searchEmpty}>
-                
+                <Text style={styles.searchEmptyText}>Type to search regions</Text>
               </View>
             ) : searchResults.length === 0 ? (
               <View style={styles.searchEmpty}>
@@ -247,7 +268,11 @@ export default function DashboardScreen() {
                 renderItem={({ item }) => (
                   <RegionCard
                     region={item}
-                    onPress={r => { setSearchVisible(false); setSearchQuery(''); setSelectedRegion(r); }}
+                    onPress={r => {
+                      setSearchVisible(false);
+                      setSearchQuery('');
+                      setSelectedRegion(r);
+                    }}
                   />
                 )}
               />
