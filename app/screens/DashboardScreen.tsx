@@ -14,7 +14,6 @@ import SectionHeader from '../components/SectionHeader';
 import AlertCard from '../components/AlertCard';
 import RegionCard, { RegionItem } from '../components/RegionCard';
 import NDVIChart from '../components/NDVIChart';
-import SearchBar from '../components/SearchBar';
 import RegionDetailSheet from '../components/RegionDetailSheet';
 
 import { fetchAlerts, fetchRegions } from '../services/api';
@@ -35,13 +34,10 @@ export default function DashboardScreen() {
   const { user } = useAuth();
 
   const [selectedRegion, setSelectedRegion] = useState<RegionItem | null>(null);
-  const [searchVisible, setSearchVisible] = useState(false);
-  const [searchQuery, setSearchQuery] = useState('');
   const [alerts, setAlerts] = useState<any[]>([]);
   const [regions, setRegions] = useState<RegionItem[]>([]);
   const [loading, setLoading] = useState(true);
 
-  // ── Derive name + initials from Firebase user ──────────────────
   const getInitials = () => {
     if (user?.displayName) {
       return user.displayName
@@ -82,7 +78,7 @@ export default function DashboardScreen() {
           severity: a.severity,
           description: a.message,
           ndvi_change: a.ndvi_change,
-          area_affected: Math.abs(Math.round(a.percent_change)),
+          area_affected: a.area_affected ?? Math.abs(Math.round(a.percent_change)),
           created_at: new Date(a.created_at).toLocaleString(),
         }));
 
@@ -93,6 +89,7 @@ export default function DashboardScreen() {
           zone: r.zone ?? '—',
           ndvi_mean: r.ndvi_mean ?? 0,
           ndvi_change: r.ndvi_change ?? 0,
+          area_km2: r.area_km2 ?? 0,
         }));
 
         setAlerts(mappedAlerts);
@@ -109,21 +106,24 @@ export default function DashboardScreen() {
     load();
   }, []);
 
+  // ── Summary computed from real data ──────────────────────────────
   const summary = USE_MOCK_DATA ? _mockSummary : {
     avg_ndvi: regions.length
       ? regions.reduce((s, r) => s + (r.ndvi_mean ?? 0), 0) / regions.length
       : 0,
-    ndvi_change: 0,
-    area_km2: 3287263,
+    ndvi_change: 0, // needs /api/ndvi trend endpoint
+    area_km2: regions.reduce((s, r: any) => s + (r.area_km2 ?? 0), 0),
     active_alerts: alerts.length,
     critical_alerts: alerts.filter((a: any) => a.severity === 'Critical').length,
   };
 
   const ndviTrend = _mockNDVITrend;
 
-  const searchResults = regions.filter(r =>
-    r.name.toLowerCase().includes(searchQuery.toLowerCase())
-  );
+  const formatAreaKm2 = (km2: number) => {
+    if (km2 >= 1_000_000) return `${(km2 / 1_000_000).toFixed(2)}M`;
+    if (km2 >= 1_000) return `${(km2 / 1_000).toFixed(0)}K`;
+    return `${km2}`;
+  };
 
   return (
     <SafeAreaView style={styles.safeArea} edges={['top']}>
@@ -145,8 +145,6 @@ export default function DashboardScreen() {
           </View>
         </View>
 
-        <SearchBar onPress={() => setSearchVisible(true)} />
-
         {loading ? (
           <ActivityIndicator color="#7aad6a" style={{ marginTop: 40 }} />
         ) : (
@@ -157,17 +155,21 @@ export default function DashboardScreen() {
               <View style={styles.metricsRow}>
                 <View style={styles.metricCard}>
                   <Text style={styles.metricLabel}>AVG NDVI</Text>
-                  <Text style={styles.metricValue}>{summary.avg_ndvi.toFixed(2)}</Text>
-                  <Text style={styles.metricChange}>
-                    {summary.ndvi_change >= 0 ? '+' : ''}{summary.ndvi_change.toFixed(2)} ↑
+                  <Text style={styles.metricValue}>
+                    {summary.avg_ndvi.toFixed(2)}
+                  </Text>
+                  <Text style={[styles.metricChange, { color: '#5a8a52' }]}>
+                    current
                   </Text>
                 </View>
                 <View style={styles.metricCard}>
                   <Text style={styles.metricLabel}>AREA (KM²)</Text>
                   <Text style={styles.metricValue}>
-                    {(summary.area_km2 / 1_000_000).toFixed(2)}M
+                    {formatAreaKm2(summary.area_km2)}
                   </Text>
-                  <Text style={[styles.metricChange, { color: '#5a8a52' }]}>monitored</Text>
+                  <Text style={[styles.metricChange, { color: '#5a8a52' }]}>
+                    monitored
+                  </Text>
                 </View>
                 <View style={[styles.metricCard, { borderColor: '#3a1a1a' }]}>
                   <Text style={styles.metricLabel}>ALERTS</Text>
@@ -184,7 +186,13 @@ export default function DashboardScreen() {
             {/* NDVI Chart */}
             <View style={styles.section}>
               <SectionHeader title="NDVI TREND — INDIA" />
-              <NDVIChart labels={ndviTrend.labels} values={ndviTrend.values} />
+              <NDVIChart
+                labels={ndviTrend.labels}
+                values={ndviTrend.values}
+              />
+              <Text style={styles.chartNote}>
+                * Trend data is currently using sample values
+              </Text>
             </View>
 
             {/* Alerts */}
@@ -194,9 +202,13 @@ export default function DashboardScreen() {
                 action="View all"
                 onAction={() => navigation.navigate('Map')}
               />
-              {alerts.map((alert: any) => (
-                <AlertCard key={alert.alert_id} alert={alert} />
-              ))}
+              {alerts.length === 0 ? (
+                <Text style={styles.emptyText}>No active alerts</Text>
+              ) : (
+                alerts.map((alert: any) => (
+                  <AlertCard key={alert.alert_id} alert={alert} />
+                ))
+              )}
             </View>
 
             {/* Top Regions */}
@@ -206,13 +218,17 @@ export default function DashboardScreen() {
                 action="See map"
                 onAction={() => navigation.navigate('Map')}
               />
-              {regions.map(region => (
-                <RegionCard
-                  key={region.region_id}
-                  region={region}
-                  onPress={setSelectedRegion}
-                />
-              ))}
+              {regions.length === 0 ? (
+                <Text style={styles.emptyText}>No region data available</Text>
+              ) : (
+                regions.map(region => (
+                  <RegionCard
+                    key={region.region_id}
+                    region={region}
+                    onPress={setSelectedRegion}
+                  />
+                ))
+              )}
             </View>
           </>
         )}
@@ -226,60 +242,6 @@ export default function DashboardScreen() {
           onClose={() => setSelectedRegion(null)}
         />
       )}
-
-      <Modal
-        visible={searchVisible}
-        animationType="slide"
-        transparent
-        onRequestClose={() => { setSearchVisible(false); setSearchQuery(''); }}
-      >
-        <View style={styles.searchOverlay}>
-          <SafeAreaView style={styles.searchContainer} edges={['top']}>
-            <View style={styles.searchHeader}>
-              <TextInput
-                style={styles.searchInput}
-                placeholder="Search regions, districts..."
-                placeholderTextColor="#5a8a52"
-                value={searchQuery}
-                onChangeText={setSearchQuery}
-                autoFocus
-              />
-              <TouchableOpacity
-                onPress={() => { setSearchVisible(false); setSearchQuery(''); }}
-                style={styles.searchCancelBtn}
-              >
-                <Text style={styles.searchCancelText}>Cancel</Text>
-              </TouchableOpacity>
-            </View>
-
-            {searchQuery.length === 0 ? (
-              <View style={styles.searchEmpty}>
-                <Text style={styles.searchEmptyText}>Type to search regions</Text>
-              </View>
-            ) : searchResults.length === 0 ? (
-              <View style={styles.searchEmpty}>
-                <Text style={styles.searchEmptyText}>No results for "{searchQuery}"</Text>
-              </View>
-            ) : (
-              <FlatList
-                data={searchResults}
-                keyExtractor={item => item.region_id}
-                contentContainerStyle={{ paddingHorizontal: 20, paddingTop: 8 }}
-                renderItem={({ item }) => (
-                  <RegionCard
-                    region={item}
-                    onPress={r => {
-                      setSearchVisible(false);
-                      setSearchQuery('');
-                      setSelectedRegion(r);
-                    }}
-                  />
-                )}
-              />
-            )}
-          </SafeAreaView>
-        </View>
-      </Modal>
     </SafeAreaView>
   );
 }
@@ -290,7 +252,7 @@ const styles = StyleSheet.create({
   scrollContent: { paddingHorizontal: 20, paddingTop: 16 },
   header: {
     flexDirection: 'row', justifyContent: 'space-between',
-    alignItems: 'flex-start', marginBottom: 12,
+    alignItems: 'flex-start', marginBottom: 16,
   },
   greeting: { fontSize: 12, color: '#5a8a52', letterSpacing: 0.8, marginBottom: 2 },
   name: { fontSize: 24, fontWeight: '500', color: '#d4f0c8' },
@@ -309,21 +271,11 @@ const styles = StyleSheet.create({
   metricLabel: { fontSize: 10, color: '#5a8a52', letterSpacing: 0.5, marginBottom: 4 },
   metricValue: { fontSize: 20, fontWeight: '500', color: '#d4f0c8' },
   metricChange: { fontSize: 10, color: '#4a9e3a', marginTop: 2 },
-  searchOverlay: { flex: 1, backgroundColor: '#0f1a0f' },
-  searchContainer: { flex: 1 },
-  searchHeader: {
-    flexDirection: 'row', alignItems: 'center',
-    paddingHorizontal: 20, paddingVertical: 12, gap: 10,
-    borderBottomWidth: 0.5, borderBottomColor: '#1e3a1e',
+  chartNote: {
+    fontSize: 10,
+    color: '#3a5a3a',
+    marginTop: 6,
+    fontStyle: 'italic',
   },
-  searchInput: {
-    flex: 1, backgroundColor: '#1a2e1a', borderRadius: 10,
-    paddingHorizontal: 14, paddingVertical: 10,
-    fontSize: 14, color: '#d4f0c8',
-    borderWidth: 0.5, borderColor: '#2d4a2d',
-  },
-  searchCancelBtn: { paddingVertical: 8 },
-  searchCancelText: { fontSize: 13, color: '#7aad6a' },
-  searchEmpty: { flex: 1, alignItems: 'center', justifyContent: 'center' },
-  searchEmptyText: { fontSize: 13, color: '#5a8a52' },
+  emptyText: { fontSize: 13, color: '#5a8a52', textAlign: 'center', paddingVertical: 20 },
 });

@@ -38,7 +38,7 @@ export default function RegionCard({ region, onPress }: Props) {
         </View>
         <View>
           <Text style={styles.name}>{region.name}</Text>
-          <Text style={styles.sub}>{region.level} · {region.zone}</Text>
+          <Text style={styles.sub}>{region.level} · {region.zone} </Text>
         </View>
       </View>
 

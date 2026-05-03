@@ -7,6 +7,7 @@ const getAuthHeader = async () => {
   return { Authorization: `Bearer ${token}` };
 };
 
+
 // ─── Regions ───────────────────────────────────────────────────────────────
 
 export async function fetchRegions() {

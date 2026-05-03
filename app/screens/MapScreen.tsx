@@ -1,10 +1,10 @@
 import React, { useState, useRef } from 'react';
 import {
   View, Text, StyleSheet, TouchableOpacity,
-  ScrollView, StatusBar, Dimensions,
+  ScrollView, StatusBar, Dimensions, Platform,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import MapView, { Polygon, Marker, PROVIDER_GOOGLE } from 'react-native-maps';
+import MapView, { Polygon, Marker } from 'react-native-maps';
 import SectionHeader from '../components/SectionHeader';
 import SearchBar from '../components/SearchBar';
 import AlertCard, { AlertItem } from '../components/AlertCard';
@@ -14,7 +14,6 @@ import {
   NDVI_COLORS,
   RegionPolygon,
 } from '../mock/mapData';
-import { Platform } from 'react-native';
 
 const INDIA_REGION = {
   latitude: 22.5,
@@ -105,9 +104,7 @@ export default function MapScreen() {
         <MapView
           ref={mapRef}
           style={styles.map}
-          provider={PROVIDER_GOOGLE}
           initialRegion={INDIA_REGION}
-          customMapStyle={darkMapStyle}
         >
           {mockRegionPolygons.map(region => (
             <Polygon
@@ -208,21 +205,6 @@ export default function MapScreen() {
   );
 }
 
-const darkMapStyle = [
-  { elementType: 'geometry', stylers: [{ color: '#0d1a0d' }] },
-  { elementType: 'labels.text.fill', stylers: [{ color: '#5a8a52' }] },
-  { elementType: 'labels.text.stroke', stylers: [{ color: '#0f1a0f' }] },
-  { featureType: 'administrative', elementType: 'geometry.stroke', stylers: [{ color: '#2d4a2d' }] },
-  { featureType: 'administrative.land_parcel', elementType: 'labels.text.fill', stylers: [{ color: '#3a5a3a' }] },
-  { featureType: 'road', elementType: 'geometry', stylers: [{ color: '#1a2e1a' }] },
-  { featureType: 'road.arterial', elementType: 'labels.text.fill', stylers: [{ color: '#3a5a3a' }] },
-  { featureType: 'road.highway', elementType: 'geometry', stylers: [{ color: '#1e3a1e' }] },
-  { featureType: 'road.highway', elementType: 'labels.text.fill', stylers: [{ color: '#4a7a4a' }] },
-  { featureType: 'transit', elementType: 'geometry', stylers: [{ color: '#1a2e1a' }] },
-  { featureType: 'water', elementType: 'geometry', stylers: [{ color: '#0a1a2a' }] },
-  { featureType: 'water', elementType: 'labels.text.fill', stylers: [{ color: '#2a4a6a' }] },
-];
-
 const styles = StyleSheet.create({
   safeArea: { flex: 1, backgroundColor: '#0f1a0f' },
 
@@ -236,13 +218,13 @@ const styles = StyleSheet.create({
     paddingHorizontal: 20,
     gap: 10,
     marginBottom: 10,
-    alignItems: 'center',   // ← don't stretch buttons to row height
+    alignItems: 'center',
   },
   compositeBtn: {
     flex: 1,
     alignItems: 'center',
     justifyContent: 'center',
-    paddingVertical: 10,    // ← increased to give descenders room on Android
+    paddingVertical: 10,
     borderRadius: 8,
     backgroundColor: '#1a2e1a',
     borderWidth: 0.5,
@@ -255,9 +237,9 @@ const styles = StyleSheet.create({
   compositeBtnText: {
     fontSize: 12,
     color: '#5a8a52',
-    textAlign: 'center', 
+    textAlign: 'center',
     textAlignVertical: 'center',
-    width: '100%'
+    width: '100%',
   },
   compositeBtnTextActive: { color: '#7aad6a' },
 
@@ -319,11 +301,7 @@ const styles = StyleSheet.create({
   },
   legendRow: { flexDirection: 'row', gap: 12 },
   legendItem: { flexDirection: 'row', alignItems: 'center', gap: 4 },
-  legendDot: {
-    width: 10,
-    height: 10,
-    borderRadius: 2,
-  },
+  legendDot: { width: 10, height: 10, borderRadius: 2 },
   legendLabel: { fontSize: 9, color: '#5a8a52' },
 
   alertsScroll: { flex: 1 },
