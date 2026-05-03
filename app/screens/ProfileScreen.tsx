@@ -174,7 +174,7 @@ export default function ProfileScreen() {
             onPress={() => setShowCompositeOptions(v => !v)}
             activeOpacity={0.7}
           >
-            <Text style={styles.rowLabel}>Default composite</Text>
+            <Text style={styles.rowLabel}>Default composite </Text>
             <View style={styles.rowRight}>
               <Text style={styles.rowValue}>{appSettings.defaultComposite + ' '}</Text>
               <Text style={styles.rowChevron}>
@@ -200,9 +200,7 @@ export default function ProfileScreen() {
                   <Text style={[
                     styles.compositeOptionText,
                     appSettings.defaultComposite === opt && styles.compositeOptionTextActive,
-                  ]}>
-                    {opt}
-                  </Text>
+                  ]}>{opt} </Text>
                   {appSettings.defaultComposite === opt && (
                     <Text style={styles.compositeTick}>✓</Text>
                   )}

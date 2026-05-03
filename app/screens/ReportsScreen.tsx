@@ -137,7 +137,7 @@ export default function ReportsScreen() {
 
   const handleGenerate = async () => {
     if (!selectedRegion || !selectedMonth) {
-      Alert.alert('Missing info', 'Please select a region and period.');
+      Alert.alert('Missing info', 'Please select a region and period. ');
       return;
     }
     try {
@@ -267,7 +267,7 @@ export default function ReportsScreen() {
               onPress={() => setShowRegionPicker(true)}
             >
               <Text style={[styles.pickerFieldText, !selectedRegion && styles.pickerFieldPlaceholder]}>
-                {selectedRegion?.name || 'Select region'}
+                {selectedRegion?.name + ' ' || 'Select region'}
               </Text>
               <Text style={styles.chevron}>›</Text>
             </TouchableOpacity>
@@ -279,7 +279,7 @@ export default function ReportsScreen() {
               onPress={() => setShowMonthPicker(true)}
             >
               <Text style={[styles.pickerFieldText, !selectedMonth && styles.pickerFieldPlaceholder]}>
-                {selectedMonth
+                {selectedMonth + ' '
                   ? `${MONTHS[selectedMonth.month - 1]} ${selectedMonth.year}`
                   : 'Select month'}
               </Text>
@@ -295,9 +295,7 @@ export default function ReportsScreen() {
                   style={[styles.formatBtn, selectedFormat === fmt && styles.formatBtnActive]}
                   onPress={() => setSelectedFormat(fmt)}
                 >
-                  <Text style={[styles.formatBtnText, selectedFormat === fmt && styles.formatBtnTextActive]}>
-                    {fmt}
-                  </Text>
+                  <Text style={[styles.formatBtnText, selectedFormat === fmt && styles.formatBtnTextActive]}>{fmt} </Text>
                 </TouchableOpacity>
               ))}
             </View>
