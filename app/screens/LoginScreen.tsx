@@ -21,54 +21,44 @@ export default function LoginScreen() {
   return (
     <SafeAreaView style={styles.container} edges={['top', 'bottom']}>
       <StatusBar barStyle="light-content" />
+      
       <View style={styles.topDecoration}>
         <View style={styles.decorCircleLarge} />
         <View style={styles.decorCircleSmall} />
       </View>
-      <View style={styles.logoArea}>
-        <View style={styles.logoIcon}>
-          <View style={styles.logoLeaf} />
-        </View>
-        <Text style={styles.logoText}>EcoScan</Text>
-        <Text style={styles.logoSub}>Greenery Monitoring System</Text>
-      </View>
-      <View style={styles.statsRow}>
-        <View style={styles.statItem}>
-          <Text style={styles.statValue}>28</Text>
-          <Text style={styles.statLabel}>States</Text>
-        </View>
-        <View style={styles.statDivider} />
-        <View style={styles.statItem}>
-          <Text style={styles.statValue}>700+</Text>
-          <Text style={styles.statLabel}>Districts</Text>
-        </View>
-        <View style={styles.statDivider} />
-        <View style={styles.statItem}>
-          <Text style={styles.statValue}>10m</Text>
-          <Text style={styles.statLabel}>Resolution</Text>
-        </View>
-      </View>
-      <View style={styles.signInArea}>
-        {error && (
-          <View style={styles.errorBox}>
-            <Text style={styles.errorText}>{error}</Text>
+      
+      {/* Wrapping logo and sign-in together to center them as a group */}
+      <View style={styles.mainContent}>
+        <View style={styles.logoArea}>
+          <View style={styles.logoIcon}>
+            <View style={styles.logoLeaf} />
           </View>
-        )}
-        <TouchableOpacity
-          style={styles.googleBtn}
-          onPress={login}
-          activeOpacity={0.8}
-        >
-          <View style={styles.googleIcon}>
-            <Text style={styles.googleG}>G</Text>
-          </View>
-          <Text style={styles.googleBtnText}>Continue with Google</Text>
-        </TouchableOpacity>
-        <Text style={styles.disclaimer}>
-          By continuing, you agree to EcoScan's terms of use.{'\n'}
-          Data sourced from Sentinel-2 via Google Earth Engine.
-        </Text>
+          <Text style={styles.logoText}>EcoScan</Text>
+          <Text style={styles.logoSub}>Greenery Monitoring System  </Text>
+        </View>
+
+        <View style={styles.signInArea}>
+          {error && (
+            <View style={styles.errorBox}>
+              <Text style={styles.errorText}>{error}</Text>
+            </View>
+          )}
+          <TouchableOpacity
+            style={styles.googleBtn}
+            onPress={login}
+            activeOpacity={0.8}
+          >
+            <View style={styles.googleIcon}>
+              <Text style={styles.googleG}>G</Text>
+            </View>
+            <Text style={styles.googleBtnText}>Continue with Google</Text>
+          </TouchableOpacity>
+          <Text style={styles.disclaimer}>
+            By continuing, you agree to EcoScan's terms of use.{'\n'}
+          </Text>
+        </View>
       </View>
+
       <View style={styles.bottomTag}>
         <View style={styles.ndviDot} />
         <Text style={styles.bottomTagText}>Powered by Sentinel-2 · NIT Delhi</Text>
@@ -79,9 +69,11 @@ export default function LoginScreen() {
 
 const styles = StyleSheet.create({
   container: {
-    flex: 1, backgroundColor: '#0f1a0f',
-    justifyContent: 'space-between',
-    paddingHorizontal: 28, paddingVertical: 20,
+    flex: 1, 
+    backgroundColor: '#0f1a0f',
+    paddingHorizontal: 28, 
+    paddingVertical: 20,
+    justifyContent: 'space-between', // Pushes bottomTag to the very bottom
   },
   loadingContainer: {
     flex: 1, backgroundColor: '#0f1a0f',
@@ -97,7 +89,14 @@ const styles = StyleSheet.create({
     borderWidth: 1, borderColor: '#2d4a2d',
     position: 'absolute', top: 40, left: 40,
   },
-  logoArea: { alignItems: 'center', marginTop: 60 },
+  mainContent: {
+    flex: 1,
+    justifyContent: 'center', // Centers the logo and sign-in button vertically
+  },
+  logoArea: { 
+    alignItems: 'center', 
+    marginBottom: 60, // Adds distance between the logo and the sign-in button
+  },
   logoIcon: {
     width: 64, height: 64, borderRadius: 20,
     backgroundColor: '#1a2e1a', borderWidth: 1,
@@ -111,17 +110,9 @@ const styles = StyleSheet.create({
   },
   logoText: { fontSize: 36, fontWeight: '500', color: '#d4f0c8', letterSpacing: 1 },
   logoSub: { fontSize: 13, color: '#5a8a52', marginTop: 6, letterSpacing: 0.3 },
-  statsRow: {
-    flexDirection: 'row', justifyContent: 'center',
-    alignItems: 'center', backgroundColor: '#1a2e1a',
-    borderRadius: 14, borderWidth: 0.5,
-    borderColor: '#2d4a2d', paddingVertical: 16,
+  signInArea: { 
+    gap: 14, 
   },
-  statItem: { flex: 1, alignItems: 'center' },
-  statValue: { fontSize: 22, fontWeight: '500', color: '#74c476' },
-  statLabel: { fontSize: 11, color: '#5a8a52', marginTop: 2, letterSpacing: 0.3 },
-  statDivider: { width: 0.5, height: 32, backgroundColor: '#2d4a2d' },
-  signInArea: { gap: 14 },
   errorBox: {
     backgroundColor: '#2a1010', borderRadius: 10,
     borderWidth: 0.5, borderColor: '#5a2020', padding: 12,
