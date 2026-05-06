@@ -4,6 +4,7 @@ import { API_BASE_URL } from '../constants/config';
 
 const getAuthHeader = async () => {
   const token = await auth().currentUser?.getIdToken();
+  console.log("Postman token: ", token)
   return { Authorization: `Bearer ${token}` };
 };
 
@@ -64,5 +65,14 @@ export async function fetchNDVIChange(
     headers,
     params: { period1_start: period1Start, period1_end: period1End, period2_start: period2Start, period2_end: period2End },
   });
+  return response.data;
+}
+
+
+// ─── NDVI Trend ──────────────────────────────────────────────────────
+
+export async function fetchNDVITrend() {
+  const headers = await getAuthHeader();
+  const response = await axios.get(`${API_BASE_URL}/api/ndvi/trend`, { headers });
   return response.data;
 }

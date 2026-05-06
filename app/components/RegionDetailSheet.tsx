@@ -197,8 +197,8 @@ export default function RegionDetailSheet({ region, onClose }: Props) {
             {/* Header */}
             <View style={styles.sheetHeader}>
               <View>
-                <Text style={styles.regionName}>{region.name}</Text>
-                <Text style={styles.regionSub}>{region.level} · {region.zone}</Text>
+                <Text style={styles.regionName}>{region.name} </Text>
+                <Text style={styles.regionSub}>{region.level} · {region.zone} </Text>
               </View>
               <TouchableOpacity onPress={onClose} style={styles.closeBtn}>
                 <Text style={styles.closeBtnText}>✕</Text>

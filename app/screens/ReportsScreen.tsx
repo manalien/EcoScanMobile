@@ -339,7 +339,7 @@ export default function ReportsScreen() {
                   onPress={() => { setSelectedRegion(r); setShowRegionPicker(false); }}
                 >
                   <Text style={[styles.listItemText, selectedRegion?.region_id === r.region_id && styles.listItemTextActive]}>
-                    {r.name}
+                    {r.name + ' '}
                   </Text>
                   {selectedRegion?.region_id === r.region_id && (
                     <Text style={styles.listItemTick}>✓</Text>

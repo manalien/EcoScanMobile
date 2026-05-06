@@ -20,6 +20,8 @@ import { fetchAlerts, fetchRegions } from '../services/api';
 import { USE_MOCK_DATA } from '../constants/config';
 import { useAuth } from '../store/AuthContext';
 
+import { fetchNDVITrend } from '../services/api';
+
 import {
   mockSummary as _mockSummary,
   mockNDVITrend as _mockNDVITrend,
@@ -37,6 +39,7 @@ export default function DashboardScreen() {
   const [alerts, setAlerts] = useState<any[]>([]);
   const [regions, setRegions] = useState<RegionItem[]>([]);
   const [loading, setLoading] = useState(true);
+  const [ndviTrend, setNdviTrend] = useState(_mockNDVITrend);
 
   const getInitials = () => {
     if (user?.displayName) {
@@ -67,9 +70,10 @@ export default function DashboardScreen() {
 
     const load = async () => {
       try {
-        const [alertsData, regionsData] = await Promise.all([
+        const [alertsData, regionsData, trendData] = await Promise.all([
           fetchAlerts(),
           fetchRegions(),
+          fetchNDVITrend(),
         ]);
 
         const mappedAlerts = alertsData.map((a: any) => ({
@@ -94,6 +98,7 @@ export default function DashboardScreen() {
 
         setAlerts(mappedAlerts);
         setRegions(mappedRegions);
+        setNdviTrend(trendData);
       } catch (e) {
         console.error('Dashboard fetch error:', e);
         setAlerts(_mockAlerts);
@@ -117,7 +122,7 @@ export default function DashboardScreen() {
     critical_alerts: alerts.filter((a: any) => a.severity === 'Critical').length,
   };
 
-  const ndviTrend = _mockNDVITrend;
+  // const ndviTrend = _mockNDVITrend;
 
   const formatAreaKm2 = (km2: number) => {
     if (km2 >= 1_000_000) return `${(km2 / 1_000_000).toFixed(2)}M`;
@@ -190,9 +195,6 @@ export default function DashboardScreen() {
                 labels={ndviTrend.labels}
                 values={ndviTrend.values}
               />
-              <Text style={styles.chartNote}>
-                * Trend data is currently using sample values
-              </Text>
             </View>
 
             {/* Alerts */}
