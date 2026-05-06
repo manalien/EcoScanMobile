@@ -279,7 +279,7 @@ export default function ReportsScreen() {
               onPress={() => setShowMonthPicker(true)}
             >
               <Text style={[styles.pickerFieldText, !selectedMonth && styles.pickerFieldPlaceholder]}>
-                {selectedMonth + ' '
+                {selectedMonth
                   ? `${MONTHS[selectedMonth.month - 1]} ${selectedMonth.year}`
                   : 'Select month'}
               </Text>
