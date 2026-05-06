@@ -1,6 +1,7 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import auth, { FirebaseAuthTypes } from '@react-native-firebase/auth';
 import { GoogleSignin } from '@react-native-google-signin/google-signin';
+import { syncUser } from '../services/api';
 
 GoogleSignin.configure({
   webClientId: '445824023413-e0qes8nf1lagcu3uiq227d9gsai93uf8.apps.googleusercontent.com',
@@ -46,6 +47,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
     const credential = auth.GoogleAuthProvider.credential(idToken);
     await auth().signInWithCredential(credential);
+    await syncUser();
   } catch (e: any) {
     console.error('Google Sign-In error:', e);
     setError('Sign-in failed. Please try again.');

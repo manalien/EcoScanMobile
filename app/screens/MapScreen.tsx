@@ -105,6 +105,7 @@ export default function MapScreen() {
           ref={mapRef}
           style={styles.map}
           initialRegion={INDIA_REGION}
+          // customMapStyle={darkMapStyle}
         >
           {mockRegionPolygons.map(region => (
             <Polygon
