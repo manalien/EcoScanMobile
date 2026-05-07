@@ -34,7 +34,7 @@ const MONTHS = [
   'Jul ', 'Aug ', 'Sep ', 'Oct ', 'Nov ', 'Dec ',
 ];
 const YEARS = [2024, 2025, 2026];
-const FORMATS = ['PDF', 'Excel '] as const;
+const FORMATS = ['PDF', 'Excel'] as const;
 
 interface MonthYear { month: number; year: number; }
 

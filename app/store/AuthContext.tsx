@@ -24,7 +24,14 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    const unsubscribe = auth().onAuthStateChanged((firebaseUser) => {
+    const unsubscribe = auth().onAuthStateChanged(async (firebaseUser) => {
+      if (firebaseUser) {
+        try {
+          await syncUser();
+        } catch (e) {
+          console.error('syncUser failed:', e);
+        }
+      }
       setUser(firebaseUser);
       setLoading(false);
     });
@@ -32,27 +39,27 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }, []);
 
   const login = async () => {
-  try {
-    setError(null);
-    await GoogleSignin.hasPlayServices();
-    const response = await GoogleSignin.signIn();
-    
-    // newer versions nest it under response.data
-    const idToken = response.data?.idToken ?? (response as any).idToken;
-    
-    if (!idToken) {
-      setError('Sign-in failed: no token received.');
-      return;
-    }
+    try {
+      setError(null);
+      await GoogleSignin.hasPlayServices();
+      const response = await GoogleSignin.signIn();
 
-    const credential = auth.GoogleAuthProvider.credential(idToken);
-    await auth().signInWithCredential(credential);
-    await syncUser();
-  } catch (e: any) {
-    console.error('Google Sign-In error:', e);
-    setError('Sign-in failed. Please try again.');
-  }
-};
+      // newer versions nest it under response.data
+      const idToken = response.data?.idToken ?? (response as any).idToken;
+
+      if (!idToken) {
+        setError('Sign-in failed: no token received.');
+        return;
+      }
+
+      const credential = auth.GoogleAuthProvider.credential(idToken);
+      await auth().signInWithCredential(credential);
+      // syncUser is now handled by onAuthStateChanged, no need to call it here
+    } catch (e: any) {
+      console.error('Google Sign-In error:', e);
+      setError('Sign-in failed. Please try again.');
+    }
+  };
 
   const logout = async () => {
     try {

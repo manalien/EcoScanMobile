@@ -3,7 +3,9 @@ import auth from '@react-native-firebase/auth';
 import { API_BASE_URL } from '../constants/config';
 
 const getAuthHeader = async () => {
-  const token = await auth().currentUser?.getIdToken();
+  const currentUser = auth().currentUser;
+  if (!currentUser) throw new Error('User not authenticated');
+  const token = await currentUser.getIdToken();
   return { Authorization: `Bearer ${token}` };
 };
 
